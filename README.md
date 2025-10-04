@@ -1,6 +1,13 @@
-# Simple Chatbot
+# AI-Powered Code Reviewer
 
-A simple chatbot using Groq's LLaMA 3.2 API.
+An intelligent code review tool that analyzes git diffs using LLM to detect bugs, security issues, and suggest improvements.
+
+## Features
+
+- 📊 **Git Diff Analysis** - Extracts and analyzes code changes from commits/branches
+- 🤖 **Smart Code Review** - Detects bugs, security vulnerabilities, and code smells
+- 🔍 **Context-Aware** - Reads related files, imports, and dependencies
+- 📝 **Multiple Output Formats** - Terminal, Markdown, and JSON
 
 ## Setup
 
@@ -21,12 +28,40 @@ GROQ_API_KEY=your_actual_api_key
 
 ## Usage
 
+Review the latest commit:
 ```bash
-python chatbot.py
+python code_reviewer.py
 ```
 
-## Commands
+Review a specific commit:
+```bash
+python code_reviewer.py abc123
+```
 
-- Type your message to chat
-- Type `quit` to exit
-- Type `reset` to clear conversation history
+Compare two branches:
+```bash
+python code_reviewer.py feature-branch --base main
+```
+
+Save review to markdown:
+```bash
+python code_reviewer.py --format markdown --output review.md
+```
+
+Get JSON output:
+```bash
+python code_reviewer.py --format json --output review.json
+```
+
+Include full file context (slower but more accurate):
+```bash
+python code_reviewer.py --context
+```
+
+## What It Reviews
+
+- **Bugs** - Logic errors, null pointer issues, type mismatches
+- **Security** - SQL injection, XSS, hardcoded secrets
+- **Performance** - Inefficient algorithms, memory leaks
+- **Code Smells** - Anti-patterns, complexity issues
+- **Best Practices** - Language-specific conventions
