@@ -2,8 +2,8 @@
 LLM-powered code review using Groq API
 """
 from groq import Groq
-from config import GROQ_API_KEY
-from context_builder import CodeContext
+from ..config.settings import GROQ_API_KEY
+from .context_builder import CodeContext
 from typing import List, Dict
 from dataclasses import dataclass
 

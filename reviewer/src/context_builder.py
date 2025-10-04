@@ -5,7 +5,7 @@ import os
 import re
 from dataclasses import dataclass
 from typing import List, Dict, Set
-from git_analyzer import FileChange
+from .git_analyzer import FileChange
 
 
 @dataclass

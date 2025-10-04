@@ -2,7 +2,7 @@
 Format code review results in different output formats
 """
 import json
-from llm_reviewer import ReviewResult, ReviewIssue
+from .llm_reviewer import ReviewResult, ReviewIssue
 from typing import Dict
 
 

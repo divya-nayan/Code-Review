@@ -3,10 +3,10 @@ Main CLI for AI-powered code review
 """
 import argparse
 import sys
-from git_analyzer import GitAnalyzer
-from context_builder import ContextBuilder
-from llm_reviewer import LLMReviewer
-from output_formatter import OutputFormatter
+from src.git_analyzer import GitAnalyzer
+from src.context_builder import ContextBuilder
+from src.llm_reviewer import LLMReviewer
+from src.output_formatter import OutputFormatter
 
 
 def main():
