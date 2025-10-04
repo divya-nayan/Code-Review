@@ -14,4 +14,4 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
 MODEL_NAME = "llama-3.2-90b-text-preview"
 
 # App Configuration
-APP_TITLE = "AI Chatbot"
+APP_TITLE = "Interactive Chatbot"

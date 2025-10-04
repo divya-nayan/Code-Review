@@ -1,6 +1,6 @@
-# AI-Powered Code Reviewer
+# Automated Code Reviewer
 
-An intelligent code review tool that analyzes git diffs using LLM to detect bugs, security issues, and suggest improvements.
+An intelligent code review tool that analyzes git diffs to detect bugs, security issues, and suggest improvements.
 
 ## Features
 

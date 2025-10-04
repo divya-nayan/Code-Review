@@ -1,6 +1,6 @@
-# AI Chatbot (Streamlit)
+# Interactive Chatbot
 
-A simple, elegant chatbot web application built with Streamlit and Groq's LLaMA 3.2.
+A simple, elegant chatbot web application built with Streamlit.
 
 ## Features
 

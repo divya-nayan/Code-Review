@@ -8,7 +8,7 @@ from ..src.exceptions import InvalidAPIKeyError
 
 def validate_api_key(api_key: Optional[str]) -> str:
     """
-    Validate Groq API key
+    Validate API key
 
     Args:
         api_key: API key to validate
@@ -31,7 +31,7 @@ def validate_api_key(api_key: Optional[str]) -> str:
 
     if not api_key.startswith("gsk_"):
         raise InvalidAPIKeyError(
-            "API key format appears incorrect. Groq API keys should start with 'gsk_'."
+            "API key format appears incorrect. Expected format: gsk_..."
         )
 
     return api_key

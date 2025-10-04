@@ -1,6 +1,6 @@
 # Code Review Projects
 
-A collection of AI-powered tools using Groq's LLaMA 3.2 API.
+A collection of intelligent development tools for code analysis and interaction.
 
 ## Projects
 
@@ -43,9 +43,9 @@ python review.py
 cp .env.example .env
 ```
 
-2. Add your Groq API key to `.env`:
+2. Add your API key to `.env`:
 ```
-GROQ_API_KEY=your_actual_api_key
+GROQ_API_KEY=your_api_key_here
 ```
 
 ## Project Structure
@@ -58,7 +58,7 @@ GROQ_API_KEY=your_actual_api_key
 │   ├── config/           # Configuration
 │   └── README.md
 │
-├── reviewer/             # AI code reviewer
+├── reviewer/             # Code reviewer
 │   ├── review.py         # Main CLI
 │   ├── src/              # Source code
 │   ├── config/           # Configuration
@@ -67,8 +67,3 @@ GROQ_API_KEY=your_actual_api_key
 ├── .env.example          # Environment template
 └── README.md
 ```
-
-## Branches
-
-- **main** - Code reviewer tool
-- **test** - Simple chatbot (legacy)

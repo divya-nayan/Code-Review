@@ -55,7 +55,6 @@ def main():
     )
 
     st.title(f"{APP_ICON} {APP_TITLE}")
-    st.caption("Powered by Groq LLaMA 3.2")
 
     # Initialize
     init_session_state()

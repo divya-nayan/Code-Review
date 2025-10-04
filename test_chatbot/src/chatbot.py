@@ -1,5 +1,5 @@
 """
-Chatbot implementation using Groq API
+Chatbot implementation
 """
 import logging
 from groq import Groq
@@ -25,7 +25,7 @@ class ChatBot:
         Initialize chatbot
 
         Args:
-            api_key: Groq API key
+            api_key: API key
             model: Model name to use
             system_message: Optional system message to set chatbot behavior
 
@@ -48,7 +48,7 @@ class ChatBot:
             self.client = Groq(api_key=self.api_key)
             logger.info(f"ChatBot initialized with model: {self.model}")
         except Exception as e:
-            raise APIError(f"Failed to initialize Groq client: {e}")
+            raise APIError(f"Failed to initialize API client: {e}")
 
     def chat(
         self,
@@ -82,7 +82,7 @@ class ChatBot:
             "content": message
         })
 
-        logger.debug(f"Sending message to LLM (temp={temperature}, tokens={max_tokens})")
+        logger.debug(f"Sending message (temp={temperature}, tokens={max_tokens})")
 
         try:
             # Get response from API

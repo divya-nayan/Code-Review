@@ -1,5 +1,5 @@
 """
-LLM-powered code review using Groq API
+Automated code review using language models
 """
 import logging
 from groq import Groq
@@ -51,7 +51,7 @@ class ReviewResult:
 
 
 class LLMReviewer:
-    """Performs AI-powered code review"""
+    """Performs automated code review"""
 
     def __init__(
         self,
@@ -61,10 +61,10 @@ class LLMReviewer:
         max_tokens: int = DEFAULT_MAX_TOKENS
     ):
         """
-        Initialize LLM reviewer
+        Initialize code reviewer
 
         Args:
-            api_key: Groq API key
+            api_key: API key
             model: Model name to use
             temperature: Sampling temperature
             max_tokens: Maximum tokens per response
@@ -80,11 +80,11 @@ class LLMReviewer:
         try:
             self.client = Groq(api_key=self.api_key)
         except Exception as e:
-            raise LLMReviewError(f"Failed to initialize Groq client: {e}")
+            raise LLMReviewError(f"Failed to initialize API client: {e}")
 
     def review(self, contexts: List[CodeContext]) -> ReviewResult:
         """
-        Review code changes using LLM
+        Review code changes
 
         Args:
             contexts: List of code contexts to review
@@ -147,7 +147,7 @@ class LLMReviewer:
         # Build prompt
         prompt = self._build_review_prompt(context)
 
-        # Call LLM
+        # Call API
         try:
             response = self.client.chat.completions.create(
                 model=self.model,
@@ -190,7 +190,7 @@ Be concise and focus on real issues. Don't nitpick formatting unless it affects 
             raise LLMReviewError(f"Failed to review {context.file_change.path}: {e}")
 
     def _build_review_prompt(self, context: CodeContext) -> str:
-        """Build prompt for LLM review"""
+        """Build prompt for review"""
         prompt_parts = [
             f"File: {context.file_change.path}",
             f"Change Type: {context.file_change.change_type}",
@@ -220,7 +220,7 @@ Be concise and focus on real issues. Don't nitpick formatting unless it affects 
         return "\n".join(prompt_parts)
 
     def _parse_review_response(self, response: str, file_path: str) -> List[ReviewIssue]:
-        """Parse LLM response into ReviewIssue objects"""
+        """Parse API response into ReviewIssue objects"""
         issues = []
         current_issue = {}
 

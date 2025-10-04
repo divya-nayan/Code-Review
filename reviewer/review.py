@@ -1,5 +1,5 @@
 """
-Main CLI for AI-powered code review
+Main CLI for automated code review
 """
 import argparse
 import sys
@@ -23,7 +23,7 @@ def main() -> int:
         Exit code (0 for success, 1 for error)
     """
     parser = argparse.ArgumentParser(
-        description="AI-powered code review tool",
+        description="Automated code review tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
@@ -91,7 +91,7 @@ Examples:
         contexts = context_builder.build_contexts(changes, full_context=args.context)
 
         # Perform review
-        logger.info("🤖 Running AI code review...")
+        logger.info("🤖 Running automated code review...")
         reviewer = LLMReviewer()
         review_results = reviewer.review(contexts)
 

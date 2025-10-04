@@ -21,6 +21,6 @@ MAX_TOKENS = 2048
 DEFAULT_MAX_TOKENS = 1024
 
 # UI Configuration
-APP_TITLE = "AI Chatbot"
+APP_TITLE = "Interactive Chatbot"
 APP_ICON = "🤖"
 DEFAULT_PLACEHOLDER = "Type your message here..."

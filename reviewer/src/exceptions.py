@@ -14,7 +14,7 @@ class GitAnalysisError(CodeReviewError):
 
 
 class LLMReviewError(CodeReviewError):
-    """Raised when LLM review fails"""
+    """Raised when review process fails"""
     pass
 
 
