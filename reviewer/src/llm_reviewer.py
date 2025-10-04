@@ -1,22 +1,44 @@
 """
 LLM-powered code review using Groq API
 """
+import logging
 from groq import Groq
-from ..config.settings import GROQ_API_KEY
+from typing import List, Optional
+
+from ..config.settings import GROQ_API_KEY, MODEL_NAME
 from .context_builder import CodeContext
-from typing import List, Dict
+from .constants import (
+    Severity, Category, ChangeType,
+    DEFAULT_MODEL, DEFAULT_TEMPERATURE, DEFAULT_MAX_TOKENS
+)
+from .exceptions import LLMReviewError, InvalidAPIKeyError
+from ..utils.validators import validate_api_key
 from dataclasses import dataclass
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class ReviewIssue:
     """Represents a code review issue"""
-    severity: str  # critical, warning, info
-    category: str  # bug, security, style, performance
+    severity: str
+    category: str
     file: str
     line: int
     message: str
     suggestion: str
+
+    def __post_init__(self):
+        """Validate issue fields"""
+        valid_severities = {s.value for s in Severity}
+        if self.severity not in valid_severities:
+            logger.warning(f"Invalid severity: {self.severity}, defaulting to 'info'")
+            self.severity = Severity.INFO.value
+
+        valid_categories = {c.value for c in Category}
+        if self.category not in valid_categories:
+            logger.warning(f"Invalid category: {self.category}, defaulting to 'general'")
+            self.category = Category.GENERAL.value
 
 
 @dataclass
@@ -31,22 +53,76 @@ class ReviewResult:
 class LLMReviewer:
     """Performs AI-powered code review"""
 
-    def __init__(self, api_key=None):
-        self.api_key = api_key or GROQ_API_KEY
-        self.client = Groq(api_key=self.api_key)
+    def __init__(
+        self,
+        api_key: Optional[str] = None,
+        model: str = MODEL_NAME,
+        temperature: float = DEFAULT_TEMPERATURE,
+        max_tokens: int = DEFAULT_MAX_TOKENS
+    ):
+        """
+        Initialize LLM reviewer
+
+        Args:
+            api_key: Groq API key
+            model: Model name to use
+            temperature: Sampling temperature
+            max_tokens: Maximum tokens per response
+
+        Raises:
+            InvalidAPIKeyError: If API key is invalid
+        """
+        self.api_key = validate_api_key(api_key or GROQ_API_KEY)
+        self.model = model
+        self.temperature = temperature
+        self.max_tokens = max_tokens
+
+        try:
+            self.client = Groq(api_key=self.api_key)
+        except Exception as e:
+            raise LLMReviewError(f"Failed to initialize Groq client: {e}")
 
     def review(self, contexts: List[CodeContext]) -> ReviewResult:
-        """Review code changes using LLM"""
+        """
+        Review code changes using LLM
+
+        Args:
+            contexts: List of code contexts to review
+
+        Returns:
+            ReviewResult containing all issues found
+
+        Raises:
+            LLMReviewError: If review process fails
+        """
+        if not contexts:
+            logger.warning("No contexts to review")
+            return ReviewResult(
+                issues=[],
+                summary="No files to review",
+                files_reviewed=0,
+                total_issues=0
+            )
+
+        logger.info(f"Starting review of {len(contexts)} file(s)")
         all_issues = []
 
-        for context in contexts:
-            if context.file_change.change_type == 'deleted':
+        for i, context in enumerate(contexts, 1):
+            if context.file_change.change_type == ChangeType.DELETED.value:
+                logger.debug(f"Skipping deleted file: {context.file_change.path}")
                 continue
 
-            issues = self._review_file_change(context)
-            all_issues.extend(issues)
+            logger.info(f"Reviewing file {i}/{len(contexts)}: {context.file_change.path}")
+            try:
+                issues = self._review_file_change(context)
+                all_issues.extend(issues)
+                logger.debug(f"Found {len(issues)} issue(s) in {context.file_change.path}")
+            except Exception as e:
+                logger.error(f"Failed to review {context.file_change.path}: {e}")
+                # Continue with other files instead of failing entirely
 
         summary = self._generate_summary(all_issues, len(contexts))
+        logger.info(f"Review complete: {len(all_issues)} total issue(s) found")
 
         return ReviewResult(
             issues=all_issues,
@@ -56,14 +132,25 @@ class LLMReviewer:
         )
 
     def _review_file_change(self, context: CodeContext) -> List[ReviewIssue]:
-        """Review a single file change"""
+        """
+        Review a single file change
+
+        Args:
+            context: Code context to review
+
+        Returns:
+            List of review issues
+
+        Raises:
+            LLMReviewError: If review fails
+        """
         # Build prompt
         prompt = self._build_review_prompt(context)
 
         # Call LLM
         try:
             response = self.client.chat.completions.create(
-                model="llama-3.2-90b-text-preview",
+                model=self.model,
                 messages=[
                     {
                         "role": "system",
@@ -89,8 +176,8 @@ Be concise and focus on real issues. Don't nitpick formatting unless it affects 
                         "content": prompt
                     }
                 ],
-                temperature=0.3,
-                max_tokens=2000
+                temperature=self.temperature,
+                max_tokens=self.max_tokens
             )
 
             # Parse response
@@ -100,8 +187,7 @@ Be concise and focus on real issues. Don't nitpick formatting unless it affects 
             )
 
         except Exception as e:
-            print(f"Warning: Failed to review {context.file_change.path}: {e}")
-            return []
+            raise LLMReviewError(f"Failed to review {context.file_change.path}: {e}")
 
     def _build_review_prompt(self, context: CodeContext) -> str:
         """Build prompt for LLM review"""

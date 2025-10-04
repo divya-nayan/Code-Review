@@ -3,28 +3,68 @@ Git diff extraction and analysis
 """
 import subprocess
 import re
+import logging
 from dataclasses import dataclass
 from typing import List, Optional
+from pathlib import Path
+
+from .constants import ChangeType, DEFAULT_REPO_PATH, DEFAULT_TARGET
+from .exceptions import GitAnalysisError
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class FileChange:
     """Represents a change to a file"""
     path: str
-    change_type: str  # added, modified, deleted
+    change_type: str
     additions: List[str]
     deletions: List[str]
     line_numbers: List[int]
     diff: str
 
+    def __post_init__(self):
+        """Validate change type"""
+        valid_types = {ct.value for ct in ChangeType}
+        if self.change_type not in valid_types:
+            raise ValueError(f"Invalid change type: {self.change_type}")
+
 
 class GitAnalyzer:
     """Extracts and analyzes git changes"""
 
-    def __init__(self, repo_path='.'):
-        self.repo_path = repo_path
+    def __init__(self, repo_path: str = DEFAULT_REPO_PATH):
+        """
+        Initialize GitAnalyzer
 
-    def get_changes(self, target='HEAD', base=None) -> List[FileChange]:
+        Args:
+            repo_path: Path to git repository
+
+        Raises:
+            GitAnalysisError: If repository path is invalid
+        """
+        self.repo_path = Path(repo_path)
+        self._validate_repo()
+
+    def _validate_repo(self) -> None:
+        """
+        Validate that the path is a git repository
+
+        Raises:
+            GitAnalysisError: If not a valid git repository
+        """
+        if not self.repo_path.exists():
+            raise GitAnalysisError(f"Repository path does not exist: {self.repo_path}")
+
+        git_dir = self.repo_path / ".git"
+        if not git_dir.exists():
+            raise GitAnalysisError(
+                f"Not a git repository: {self.repo_path}. "
+                "Please run this tool from within a git repository."
+            )
+
+    def get_changes(self, target: str = DEFAULT_TARGET, base: Optional[str] = None) -> List[FileChange]:
         """
         Extract changes from git
 
@@ -34,7 +74,12 @@ class GitAnalyzer:
 
         Returns:
             List of FileChange objects
+
+        Raises:
+            GitAnalysisError: If git operation fails
         """
+        logger.info(f"Analyzing git changes: target={target}, base={base}")
+
         if base:
             diff_command = ['git', 'diff', base, target]
         else:
@@ -44,25 +89,40 @@ class GitAnalyzer:
         try:
             result = subprocess.run(
                 diff_command,
-                cwd=self.repo_path,
+                cwd=str(self.repo_path),
                 capture_output=True,
                 text=True,
-                check=True
+                check=True,
+                timeout=30
             )
-            return self._parse_diff(result.stdout)
+            changes = self._parse_diff(result.stdout)
+            logger.info(f"Found {len(changes)} file change(s)")
+            return changes
+
+        except subprocess.TimeoutExpired:
+            raise GitAnalysisError("Git command timed out after 30 seconds")
+
         except subprocess.CalledProcessError as e:
             # If diff fails, try showing the commit itself
             try:
+                logger.debug("Trying git show command as fallback")
                 result = subprocess.run(
                     ['git', 'show', target, '--format=', '--patch'],
-                    cwd=self.repo_path,
+                    cwd=str(self.repo_path),
                     capture_output=True,
                     text=True,
-                    check=True
+                    check=True,
+                    timeout=30
                 )
-                return self._parse_diff(result.stdout)
-            except subprocess.CalledProcessError:
-                raise RuntimeError(f"Failed to get git diff: {e.stderr}")
+                changes = self._parse_diff(result.stdout)
+                logger.info(f"Found {len(changes)} file change(s) using git show")
+                return changes
+
+            except subprocess.CalledProcessError as show_error:
+                raise GitAnalysisError(
+                    f"Failed to get git diff: {e.stderr}\n"
+                    f"Also failed with git show: {show_error.stderr}"
+                )
 
     def _parse_diff(self, diff_text: str) -> List[FileChange]:
         """Parse git diff output into FileChange objects"""
@@ -129,11 +189,19 @@ class GitAnalyzer:
         return changes
 
     def _detect_change_type(self, diff_lines: List[str]) -> str:
-        """Detect if file was added, modified, or deleted"""
+        """
+        Detect if file was added, modified, or deleted
+
+        Args:
+            diff_lines: Lines from the diff
+
+        Returns:
+            Change type string
+        """
         diff_text = '\n'.join(diff_lines)
         if 'new file mode' in diff_text:
-            return 'added'
+            return ChangeType.ADDED.value
         elif 'deleted file mode' in diff_text:
-            return 'deleted'
+            return ChangeType.DELETED.value
         else:
-            return 'modified'
+            return ChangeType.MODIFIED.value
